@@ -1,17 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 
-# Carregar a base de dados MNIST
-mnist = fetch_openml('mnist_784')
-
-# Filtrar apenas os dígitos 0 e 1
-X = mnist.data[(mnist.target == '0') | (mnist.target == '1')]
-y = mnist.target[(mnist.target == '0') | (mnist.target == '1')]
+# Carregar a base de dados Breast Cancer Wisconsin
+breast_cancer = load_breast_cancer()
+X = breast_cancer.data
+y = breast_cancer.target
 
 # Listas para armazenar as métricas de cada rodada
 cm_list = []
@@ -38,10 +35,10 @@ for n in range(num_rounds):
     
     # Calcular as métricas
     accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred, average='binary', pos_label='1')
-    recall = recall_score(y_test, y_pred, average='binary', pos_label='1')
-    specificity = recall_score(y_test, y_pred, average='binary', pos_label='0')
-    f1 = f1_score(y_test, y_pred, average='binary', pos_label='1')
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    specificity = recall_score(y_test, y_pred, pos_label=0)
+    f1 = f1_score(y_test, y_pred)
     
     cm_list.append(cm)
     accuracy_list.append(accuracy)
@@ -81,6 +78,3 @@ plt.title('F-score')
 
 plt.tight_layout()
 plt.show()
-
-
-
