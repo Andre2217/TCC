@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from QuadraticClassifier import QuadraticClassifier
+from CQ_EMG import QuadraticClassifier
 
 if __name__ == "__main__":
 
@@ -40,13 +40,3 @@ if __name__ == "__main__":
         # y_enviesado[0,1] = 1
         a,m =cq.test(X_teste.T,Y_teste.T)
         
- 
-    
-
-    
-            
-
-        
-   
-
-    

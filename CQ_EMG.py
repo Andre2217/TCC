@@ -65,10 +65,3 @@ class QuadraticClassifier:
         
         return accuracy/X_test.shape[1], confusion_matrix
                
-            
-            
-
-            
-
-
-
