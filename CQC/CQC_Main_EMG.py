@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from CQC_EMG import QuadraticClassifier
+from CQC.CQC_EMG import QuadraticClassifier
 
 if __name__ == "__main__":
 
