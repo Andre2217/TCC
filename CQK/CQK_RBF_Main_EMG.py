@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from CQK.CQK_RBF_EMG import QuadraticClassifier
 
 if __name__ == "__main__":
-    X = np.loadtxt("../EMG.csv", delimiter=',')
+    X = np.loadtxt("./EMG.csv", delimiter=',')
     colors = ['red', 'blue', 'magenta', 'purple', 'yellow']
     k = 0
     Y = np.empty((0, 5))

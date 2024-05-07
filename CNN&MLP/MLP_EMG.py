@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 
 # Carregar os dados do arquivo CSV
-data = pd.read_csv('../EMG.csv', header=None)
+data = pd.read_csv('./EMG.csv', header=None)
 X = data.iloc[:, :-1]  # Features
 y = data.iloc[:, -1]   # Target
 
