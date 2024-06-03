@@ -23,6 +23,8 @@ class QuadraticClassifier:
         """
         Ajusta o classificador aos dados de treinamento.
         """
+        self.pooled_kernel_matrix = np.zeros((self.N, self.N))  # Inicializa a matriz de kernel combinada
+
         for c in range(self.c):
             idxs = self.Y_train[c, :] == 1  # Obtém os índices das amostras pertencentes à classe c
             x = self.X_train[:, idxs]  # Obtém as amostras de treinamento da classe c
@@ -32,16 +34,26 @@ class QuadraticClassifier:
             mu = np.mean(self.X_train[:, idxs], axis=1).reshape(self.p, 1)  # Calcula o vetor médio da classe c
             self.mean_vectors.append(mu)
             M = np.tile(mu, (1, n))  # Repete o vetor médio para formar uma matriz
-            kernel_matrix = self.polynomial_kernel(x, self.X_train, self.degree)  # Calcula a matriz de kernel
-            self.kernel_matrices.append(kernel_matrix)  # Adiciona a matriz de kernel à lista
-            self.pooled_kernel_matrix += pi * kernel_matrix  # Atualiza a matriz de kernel combinada
 
+            # Inicializa a matriz de kernel para a classe c
+            kernel_matrix_c = np.zeros((self.N, self.N))
+
+            # Calcula a matriz de kernel para cada par de vetores de entrada
+            for i in range(n):
+                for j in range(n):
+                    kernel_matrix_c[i, j] = self.polynomial_kernel(x[:, i].reshape(-1, 1), x[:, j].reshape(-1, 1), self.degree)
+
+            self.kernel_matrices.append(kernel_matrix_c)  # Adiciona a matriz de kernel à lista
+            self.pooled_kernel_matrix += pi * kernel_matrix_c  # Atualiza a matriz de kernel combinada
+
+        # Após o loop, a matriz de kernel combinada já estará calculada
         for c in range(self.c):
-            # Calcula a matriz de kernel de Friedman
             kernel_friedman = ((1 - self.lbd) * (self.n[c] * self.kernel_matrices[c]) + 
-                               (self.lbd * self.N * self.pooled_kernel_matrix)) / ((1 - self.lbd) * self.n[c] + self.lbd * self.N)
+                            (self.lbd * self.N * self.pooled_kernel_matrix)) / ((1 - self.lbd) * self.n[c] + self.lbd * self.N)
             self.determinant_kernel.append(np.linalg.det(kernel_friedman))  # Calcula e armazena o determinante da matriz de kernel
             self.kernel_matrices_inversion.append(np.linalg.pinv(kernel_friedman))  # Calcula e armazena a inversão da matriz de kernel
+
+
 
     def test(self, X_test, Y_test):
 
@@ -69,5 +81,5 @@ class QuadraticClassifier:
 
     @staticmethod
     def polynomial_kernel(x, X, degree):
+        return (np.dot(x.T, X) + 1) ** degree
 
-        return (2*x*X + ((x**2)*(X**2))+1)

@@ -20,16 +20,21 @@ if __name__ == "__main__":
     N, p = X.shape  # Obtém o número de amostras e o número de features
     c = Y.shape[1]  # Obtém o número de classes
 
+    # Seleciona aleatoriamente 1000 amostras
+    random_indices = np.random.choice(N, 1000, replace=False)
+    X = X[random_indices]
+    Y = Y[random_indices]
+
     for i in range(100):  # Loop para repetir o processo de treinamento e teste várias vezes
-        seed = np.random.permutation(N)  # Permuta os índices das amostras
+        seed = np.random.permutation(1000)  # Permuta os índices das amostras
         Xr = np.copy(X[seed, :])  # Aplica a permutação aos dados de entrada
         Yr = np.copy(Y[seed, :])  # Aplica a permutação aos rótulos das classes
 
         # Divide os dados em conjunto de treinamento e teste
-        X_treino = Xr[:int(N * 0.8), :]
-        Y_treino = Yr[:int(N * 0.8), :]
-        X_teste = Xr[int(N * 0.8):, :]
-        Y_teste = Yr[int(N * 0.8):, :]
+        X_treino = Xr[:int(1000 * 0.8), :]
+        Y_treino = Yr[:int(1000 * 0.8), :]
+        X_teste = Xr[int(1000 * 0.8):, :]
+        Y_teste = Yr[int(1000 * 0.8):, :]
 
         # Inicialização e ajuste do classificador
         cq = QuadraticClassifier(X_treino.T, Y_treino.T, 5, lbd=1, degree=2)  # Inicializa o classificador
@@ -52,5 +57,3 @@ if __name__ == "__main__":
         print("Desvios padrão por classe:", stds)
         print("Maior valor por classe:", max_values)
         print("Menor valor por classe:", min_values)
-
-  
