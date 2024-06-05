@@ -1,59 +1,117 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from CQK_Polinomial_EMG import QuadraticClassifier  # Importa a classe QuadraticClassifier do módulo
+import seaborn as sns
+import time
+from CQK_Polinomial_EMG import QuadraticClassifier
+
+def calcular_metricas_matriz_confusao(matriz_confusao):
+    TP = np.diag(matriz_confusao)
+    FP = np.sum(matriz_confusao, axis=0) - TP
+    FN = np.sum(matriz_confusao, axis=1) - TP
+    TN = np.sum(matriz_confusao) - (TP + FP + FN)
+
+    acuracia = (TP + TN) / np.sum(matriz_confusao)
+    sensibilidade = TP / (TP + FN)
+    especificidade = TN / (TN + FP)
+    precisao = TP / (TP + FP)
+    f1_score = 2 * (precisao * sensibilidade) / (precisao + sensibilidade)
+
+    return acuracia, sensibilidade, especificidade, f1_score
 
 if __name__ == "__main__":
-    # Carrega os dados do arquivo EMG.csv
-    X = np.loadtxt("./EMG.csv", delimiter=',')
-    colors = ['red', 'blue', 'magenta', 'purple', 'yellow']
-    k = 0
-    Y = np.empty((0, 5))  # Inicializa uma matriz vazia para armazenar os rótulos das classes
+
+    Dataset = np.loadtxt("./EMGDataset.csv", delimiter=',')
+    DadosClasse1 = Dataset[Dataset[:,2]==4,:]
+    DadosClasse2 = Dataset[Dataset[:,2]==5,:]
     
-    # Gera rótulos de classe
-    for i in range(10):
-        for j in range(5):
-            y = -np.ones((1000, 5))
-            y[:, j] = 1
-            Y = np.concatenate((Y, y))  # Concatena os rótulos das classes à matriz Y
-            k += 1000
+    dados_filtrados = np.vstack((DadosClasse1, DadosClasse2))
 
-    N, p = X.shape  # Obtém o número de amostras e o número de features
-    c = Y.shape[1]  # Obtém o número de classes
+    # Separa em X e Y
+    X = dados_filtrados[:, :2]  # As duas primeiras colunas
+    Y = dados_filtrados[:, 2]   # A terceira coluna
+    
+    # Transformar Y em uma matriz binária (one-hot encoding)
+    Y_binario = np.zeros((Y.size, 2))
+    Y_binario[Y == 4, 0] = 1
+    Y_binario[Y == 5, 1] = 1
 
-    # Seleciona aleatoriamente 1000 amostras
-    random_indices = np.random.choice(N, 1000, replace=False)
-    X = X[random_indices]
-    Y = Y[random_indices]
+    N, p = X.shape
+    c = Y_binario.shape[1]
 
-    for i in range(100):  # Loop para repetir o processo de treinamento e teste várias vezes
-        seed = np.random.permutation(1000)  # Permuta os índices das amostras
-        Xr = np.copy(X[seed, :])  # Aplica a permutação aos dados de entrada
-        Yr = np.copy(Y[seed, :])  # Aplica a permutação aos rótulos das classes
+    acuracias = []
+    sensibilidades = []
+    especificidades = []
+    f1_scores = []
+    matrizes_confusao = []
+    tempo_rodada = []
 
-        # Divide os dados em conjunto de treinamento e teste
-        X_treino = Xr[:int(1000 * 0.8), :]
-        Y_treino = Yr[:int(1000 * 0.8), :]
-        X_teste = Xr[int(1000 * 0.8):, :]
-        Y_teste = Yr[int(1000 * 0.8):, :]
+    for i in range(100):
+        seed = np.random.permutation(N)
+        Xr = np.copy(X[seed, :])
+        Yr = np.copy(Y_binario[seed])
 
-        # Inicialização e ajuste do classificador
-        cq = QuadraticClassifier(X_treino.T, Y_treino.T, 5, lbd=1, degree=2)  # Inicializa o classificador
-        cq.fit()  # Ajusta o classificador aos dados de treinamento
+        X_treino = Xr[0:int(N * .8), :]
+        Y_treino = Yr[0:int(N * .8), :]
 
-        # Teste do classificador
-        accuracy, confusion_matrix = cq.test(X_teste.T, Y_teste.T)  # Testa o classificador nos dados de teste
+        X_teste = Xr[int(N * .8):, :]
+        Y_teste = Yr[int(N * .8):, :]
+
+        cq = QuadraticClassifier(X_treino.T, Y_treino.T, c, 1)
         
-        # Estatísticas dos dados de treinamento
-        means = np.mean(X_treino, axis=0)  
-        stds = np.std(X_treino, axis=0)  
-        max_values = np.max(X_treino, axis=0) 
-        min_values = np.min(X_treino, axis=0)  
+        inicio = time.time()
+        cq.fit()
+        fim = time.time()
+        tempo = fim - inicio
+        tempo_rodada.append(tempo)
         
-        # Imprime os resultados
-        print("Acurácia:", accuracy)
-        print("Matriz de Confusão:")
-        print(confusion_matrix)
-        print("Médias por classe:", means)
-        print("Desvios padrão por classe:", stds)
-        print("Maior valor por classe:", max_values)
-        print("Menor valor por classe:", min_values)
+        acc, matriz_confusao = cq.test(X_teste.T, Y_teste.T)
+        acuracia, sensibilidade, especificidade, f1_score = calcular_metricas_matriz_confusao(matriz_confusao)
+        
+        acuracias.append(np.mean(acuracia))
+        sensibilidades.append(np.mean(sensibilidade))
+        especificidades.append(np.mean(especificidade))
+        f1_scores.append(np.mean(f1_score))
+        matrizes_confusao.append(matriz_confusao)
+
+    # Encontrar os índices das melhores e piores rodadas
+    indice_melhor = np.argmax(acuracias)
+    indice_pior = np.argmin(acuracias)
+
+    # Exibir as matrizes de confusão das melhores e piores rodadas
+    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+    sns.heatmap(matrizes_confusao[indice_melhor], annot=True, fmt='.1f', cmap='coolwarm', ax=ax[0])
+    ax[0].set_title(f'Melhor Matriz de Confusão (Acurácia: {acuracias[indice_melhor]:.5f})')
+    ax[0].set_xlabel('Predito')
+    ax[0].set_ylabel('Verdadeiro')
+
+    sns.heatmap(matrizes_confusao[indice_pior], annot=True, fmt='.1f', cmap='coolwarm', ax=ax[1])
+    ax[1].set_title(f'Pior Matriz de Confusão (Acurácia: {acuracias[indice_pior]:.5f})')
+    ax[1].set_xlabel('Predito')
+    ax[1].set_ylabel('Verdadeiro')
+
+    plt.show()
+
+    # Exibir tempo de treino
+    tempo_medio = np.mean(tempo_rodada)
+    print(f"Tempo médio de treino: {tempo_medio:.5f}")
+    print(f"Maior tempo de um treinamento: {np.max(tempo_rodada):.5f}")
+    print(f"Menor tempo de um treinamento: {np.min(tempo_rodada):.5f}")
+
+    # Exibir as métricas das melhores e piores rodadas
+    print(f"Melhor rodada (Rodada {indice_melhor + 1}):")
+    print(f"Acurácia: {acuracias[indice_melhor]:.5f}")
+    print(f"Sensibilidade: {sensibilidades[indice_melhor]:.5f}")
+    print(f"Especificidade: {especificidades[indice_melhor]:.5f}")
+    print(f"F1-score: {f1_scores[indice_melhor]:.5f}")
+
+    print(f"\nPior rodada (Rodada {indice_pior + 1}):")
+    print(f"Acurácia: {acuracias[indice_pior]:.5f}")
+    print(f"Sensibilidade: {sensibilidades[indice_pior]:.5f}")
+    print(f"Especificidade: {especificidades[indice_pior]:.5f}")
+    print(f"F1-score: {f1_scores[indice_pior]:.5f}")
+
+    # Plotar boxplot das métricas
+    plt.figure(figsize=(10, 7))
+    plt.boxplot([acuracias, sensibilidades, especificidades, f1_scores], labels=['Acurácia', 'Sensibilidade', 'Especificidade', 'F1-score'])
+    plt.title('Boxplot das Métricas')
+    plt.show()
