@@ -17,7 +17,7 @@ class QuadraticClassifier:
         self.covariances_invertion = []
         self.n = []
         self.determinant_cov = []
-        self.d = 2
+        self.d = 50
         
     def fit(self):
         for c in range(self.c):
@@ -33,8 +33,7 @@ class QuadraticClassifier:
             cov = 1 / n * ((x - M) @ (x - M).T)
             self.covariances.append(cov)
 
-            # Ajustando K para ser pxp
-            K = (x @ x2 + 1)**self.d
+            K = (x @ x2 + 10)**self.d
             self.kernel.append(K)
             self.pooled_kernel += pi * K
 
