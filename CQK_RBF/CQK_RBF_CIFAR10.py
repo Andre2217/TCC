@@ -18,7 +18,7 @@ class QuadraticClassifier:
         self.covariances_invertion = []
         self.n = []
         self.determinant_cov = []
-        self.sigma = 0.4
+        self.sigma = 50
         
     def fit(self):
         for c in range(self.c):
