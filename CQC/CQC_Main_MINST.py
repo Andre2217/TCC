@@ -60,7 +60,7 @@ if __name__ == "__main__":
         X_teste_split = X_treino_embaralhado[int(N_treino * .8):, :]
         Y_teste_split = Y_treino_embaralhado[int(N_treino * .8):, :]
 
-        cq = QuadraticClassifier(X_treino_split.T, Y_treino_split.T, 2, 0.01)
+        cq = QuadraticClassifier(X_treino_split.T, Y_treino_split.T, 2, 0.2)
         
         inicio = time.time()
         cq.fit()

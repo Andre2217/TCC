@@ -2,14 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tensorflow.keras.datasets import cifar10  # type: ignore 
-from CQC_CIFAR10 import QuadraticClassifier
+from CQK_Polinomial_CIFAR import QuadraticClassifier
 import time
 import cv2
-
-def vetorizar_imagens(X):
-    # Vetorizar cada imagem e concatenar em uma matriz
-    X_vetorizado = np.reshape(X, (X.shape[0], -1))
-    return X_vetorizado
 
 def filtrar_classes_e_converter_para_cinza(X, y, classes):
     # Filtrar as imagens e rótulos para conter apenas as classes especificadas
@@ -47,20 +42,9 @@ if __name__ == "__main__":
 
     # Filtrar e converter as imagens de teste
     X_teste_cinza, y_teste_filtrado = filtrar_classes_e_converter_para_cinza(X_teste, y_teste, classes)
-    
-    # Vetorizar as imagens
-    # X_treino_vetorizado = vetorizar_imagens(X_treino)
-    # X_teste_vetorizado = vetorizar_imagens(X_teste)
-
-    # Transformar as imagens em numpy arrays
-    X_treino_cinza = np.array(X_treino_cinza)
-    y_treino_filtrado = np.array(y_treino_filtrado)
-    X_teste_cinza = np.array(X_teste_cinza)
-    y_teste_filtrado = np.array(y_teste_filtrado)
-
-     # Concatenar os vetores em uma matriz de dados
-    X_treino_concatenado = X_treino_cinza.reshape(X_treino_cinza.shape[0], -1)
-    X_teste_concatenado = X_teste_cinza.reshape(X_teste_cinza.shape[0], -1)
+    # Redimensionando e achatando os dados para serem compatíveis com o classificador quadrático
+    X_treino_achatado = X_treino_cinza.reshape(X_treino_cinza.shape[0], -1)
+    X_teste_achatado = X_teste_cinza.reshape(X_teste_cinza.shape[0], -1)
 
     # Convertendo os rótulos para o formato exigido (one-hot encoding)
     Y_treino = np.zeros((y_treino_filtrado.size, 2))
@@ -69,7 +53,7 @@ if __name__ == "__main__":
     Y_teste = np.zeros((y_teste_filtrado.size, 2))
     Y_teste[np.arange(y_teste_filtrado.size), y_teste_filtrado.flatten()] = 1
 
-    N_treino = X_treino_concatenado.shape[0]
+    N_treino = X_treino_achatado.shape[0]
 
     acuracias = []
     sensibilidades = []
@@ -80,7 +64,7 @@ if __name__ == "__main__":
 
     for i in range(100):
         seed = np.random.permutation(N_treino)
-        X_treino_embaralhado = X_treino_concatenado[seed]
+        X_treino_embaralhado = X_treino_achatado[seed]
         Y_treino_embaralhado = Y_treino[seed]
 
         X_treino_split = X_treino_embaralhado[:int(N_treino * .9), :]
@@ -89,7 +73,7 @@ if __name__ == "__main__":
         X_teste_split = X_treino_embaralhado[int(N_treino * .9):, :]
         Y_teste_split = Y_treino_embaralhado[int(N_treino * .9):, :]
 
-        cq = QuadraticClassifier(X_treino_split.T, Y_treino_split.T, 2, 0.0001)
+        cq = QuadraticClassifier(X_treino_split.T, Y_treino_split.T, 2, 1)
         
         inicio = time.time()
         cq.fit()
@@ -109,7 +93,7 @@ if __name__ == "__main__":
     # Encontrar os índices das melhores e piores rodadas
     indice_melhor = np.argmax(acuracias)
     indice_pior = np.argmin(acuracias)
-    
+
     # Exibir as matrizes de confusão das melhores e piores rodadas
     fig, ax = plt.subplots(1, 2, figsize=(12, 5))
     sns.heatmap(matrizes_confusao[indice_melhor], annot=True, fmt='.1f', cmap='coolwarm', ax=ax[0])

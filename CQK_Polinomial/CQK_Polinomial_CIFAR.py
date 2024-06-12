@@ -1,9 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 class QuadraticClassifier:
 
-    def __init__(self, X_train, Y_train, c, lbd=1) -> None:
+    def __init__(self, X_train, Y_train, c, lbd=0) -> None:
         self.X_train = X_train
         self.Y_train = Y_train
         self.c = c
@@ -18,12 +17,13 @@ class QuadraticClassifier:
         self.covariances_invertion = []
         self.n = []
         self.determinant_cov = []
-        self.sigma = 100
+        self.d = 100
         
     def fit(self):
         for c in range(self.c):
             idxs = self.Y_train[c, :] == 1
             x = self.X_train[:, idxs]
+            x2 = x.T
             n = x.shape[1]
             self.n.append(n)
             pi = n / self.N
@@ -31,8 +31,9 @@ class QuadraticClassifier:
             self.mean_vectors.append(mu)
             M = np.tile(mu, (1, n))
             cov = 1 / n * ((x - M) @ (x - M).T)
-            self.covariances.append(cov)        
-            K = np.exp(-(np.linalg.norm(x - x)**2)/(2*self.sigma**2))
+            self.covariances.append(cov)
+
+            K = (x @ x2 + 20)**self.d
             self.kernel.append(K)
             self.pooled_kernel += pi * K
 

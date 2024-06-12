@@ -4,6 +4,18 @@ import seaborn as sns
 from tensorflow.keras.datasets import cifar10  # type: ignore 
 from CQK_RBF_CIFAR10 import QuadraticClassifier
 import time
+import cv2
+
+def filtrar_classes_e_converter_para_cinza(X, y, classes):
+    # Filtrar as imagens e rótulos para conter apenas as classes especificadas
+    indices_filtrados = np.isin(y, classes).flatten()
+    X_filtrado = X[indices_filtrados]
+    y_filtrado = y[indices_filtrados]
+    
+    # Converter as imagens para escala de cinza
+    X_cinza = np.array([cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY) for imagem in X_filtrado])
+    
+    return X_cinza, y_filtrado
 
 def calcular_metricas_matriz_confusao(matriz_confusao):
     TP = np.diag(matriz_confusao)
@@ -25,15 +37,11 @@ if __name__ == "__main__":
 
     # Selecionar apenas as classes 0 (avião) e 1 (automóvel)
     classes = [0, 1]
-    X_treino_filtrado = X_treino[np.isin(y_treino, classes).flatten()]
-    y_treino_filtrado = y_treino[np.isin(y_treino, classes).flatten()]
-    X_teste_filtrado = X_teste[np.isin(y_teste, classes).flatten()]
-    y_teste_filtrado = y_teste[np.isin(y_teste, classes).flatten()]
+    # Filtrar e converter as imagens de treino
+    X_treino_cinza, y_treino_filtrado = filtrar_classes_e_converter_para_cinza(X_treino, y_treino, classes)
 
-    # Converter imagens para tons de cinza usando cmap='gray' e expandir a dimensão do canal
-    X_treino_cinza = np.expand_dims(np.dot(X_treino_filtrado[...,:3], [0.2989, 0.5870, 0.1140]), axis=-1)
-    X_teste_cinza = np.expand_dims(np.dot(X_teste_filtrado[...,:3], [0.2989, 0.5870, 0.1140]), axis=-1)
-
+    # Filtrar e converter as imagens de teste
+    X_teste_cinza, y_teste_filtrado = filtrar_classes_e_converter_para_cinza(X_teste, y_teste, classes)
     # Redimensionando e achatando os dados para serem compatíveis com o classificador quadrático
     X_treino_achatado = X_treino_cinza.reshape(X_treino_cinza.shape[0], -1)
     X_teste_achatado = X_teste_cinza.reshape(X_teste_cinza.shape[0], -1)
